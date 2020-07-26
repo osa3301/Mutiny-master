@@ -282,6 +282,7 @@ void CRagebot::TargetEntities()
 		// todo: come up with a better way than what we used to to deal with this case that doesn't break the whole ragebot
 		ClearPossibleTargets();
 		ClearIgnorePlayerIndex();
+
 		if (_gotFreshList)
 			m_LowestFOVTarget = _lowestFOV;
 	}
@@ -345,10 +346,10 @@ bool CRagebot::Finalize()
 
 #if defined _DEBUG || defined INTERNAL_DEBUG 
 	Interfaces::DebugOverlay->AddTextOverlay(Vector(vecHitboxPos.x, vecHitboxPos.y, vecHitboxPos.z - 1.0f), 0.05f, "Aimbot Target");
-	Interfaces::DebugOverlay->AddBoxOverlay(vecHitboxPos, Vector(-2, -2, -2), Vector(1, 1, 1), LocalPlayer.CurrentEyeAngles, 255, 0, 0, 255, 0.05f);
+	Interfaces::DebugOverlay->AddBoxOverlay2(vecHitboxPos, Vector(-2, -2, -2), Vector(1, 1, 1), LocalPlayer.CurrentEyeAngles, &Color(0, 0, 0, 0), &Color(255, 0, 0, 255), 0.05f);
 #endif
 
-	if (g_WeaponController.WeaponDidFire(CurrentUserCmd.cmd->buttons | IN_ATTACK) != 1 || !variable::get().ragebot.b_autofire)
+	if (g_WeaponController.WeaponDidFire(CurrentUserCmd.cmd->buttons | IN_ATTACK) != 1 || !(variable::get().ragebot.b_autofire ? true : CurrentUserCmd.cmd->buttons & IN_ATTACK))
 		return false;
 	
 	m_angAimAngles = g_AutoBone.m_pBestHitbox->localplayer_eyeangles;
@@ -986,10 +987,9 @@ CBaseEntity* CRagebot::ForwardTrack(CPlayerrecord* pCPlayer, bool ForceForwardTr
 				Interfaces::DebugOverlay->AddBoxOverlay(testposition - vRight * 35.0f, Vector(-4, -4, -4), Vector(4, 4, 4), angletoenemy, 0, 0, 255, 255, TICKS_TO_TIME(2));
 #endif
 				Autowall(LocalPlayer.ShootPosition, testposition - vRight * 35.0f, output, false, true, pEntity, HITBOX_BODY);
+
 				if (!output.entity_hit)
-				{
 					return nullptr;
-				}
 			}
 		}
 
@@ -1493,7 +1493,33 @@ CBaseEntity* CRagebot::ForwardTrack(CPlayerrecord* pCPlayer, bool ForceForwardTr
 			Autowall_Output_t output;
 			bool scan_through_teammates = var.ragebot.b_scan_through_teammates;
 			box->bonepos = pEntity->GetBonePositionCachedOnly(box->hitbox, accessor->GetBoneArrayForWrite());
-			box->entityhit = Autowall(LocalPlayer.ShootPosition, box->bonepos, output, !scan_through_teammates, false, pEntity);
+
+			if (variable::get().ragebot.b_autowall)
+			{
+				box->entityhit = Autowall(LocalPlayer.ShootPosition, box->bonepos, output, !scan_through_teammates, false, pEntity);
+			}
+			else
+			{
+				static ConVar *wpn_recoil_scale = Interfaces::Cvar->FindVar("weapon_recoil_scale");
+
+				QAngle direction = LocalPlayer.CurrentEyeAngles + LocalPlayer.Entity->GetPunch() * (wpn_recoil_scale ? wpn_recoil_scale->GetFloat() : 2.f);
+				Vector endPos;
+
+				// get endPos
+				AngleVectors(direction, &endPos);
+				endPos = endPos * LocalPlayer.CurrentWeapon->GetCSWpnData()->flRange + LocalPlayer.ShootPosition;
+
+				Ray_t ray;
+				trace_t tr;
+
+				ray.Init(endPos, box->bonepos);
+				UTIL_TraceRay(ray, MASK_SHOT, pEntity, COLLISION_GROUP_NONE, &tr);
+
+				// hit what we wanted to hit?
+				if (tr.fraction < 1.f && tr.m_pEnt && tr.m_pEnt == pEntity)
+					box->entityhit = pEntity;
+			}
+
 			box->penetrated = output.penetrated_wall;
 			box->dmghit = output.damage_dealt;
 			box->hitboxhit = output.hitbox_hit;
@@ -1510,7 +1536,6 @@ CBaseEntity* CRagebot::ForwardTrack(CPlayerrecord* pCPlayer, bool ForceForwardTr
 						besthitbox = box;
 				}
 			}
-
 #if 0
 			if (box->entityhit == pEntity)
 				Interfaces::DebugOverlay->AddTextOverlayRGB(box->bonepos, 0, 10.f, 0, 255, 0, 255, "%2.1f", box->dmghit);

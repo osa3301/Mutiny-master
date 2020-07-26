@@ -409,7 +409,7 @@ bool __fastcall Hooks::CreateMove(void* ecx, void* edx, float flInputSampleTime,
 		LocalPlayer.OnCreateMove();
 		LocalPlayer.UpdateCurrentWeapon();
 
-#ifdef INCLUDE_LEGIT
+#ifdef INCLUDE_LEGITBOT
 		if (!var.ragebot.b_enabled)
 		{
 			legitbot::get().create_move(cmd);
@@ -615,8 +615,10 @@ bool __fastcall Hooks::CreateMove(void* ecx, void* edx, float flInputSampleTime,
 
 						Interfaces::Globals->curtime = LocalPlayer.m_flOldCurtime;
 						g_Tickbase.SetCurrentCommandTickbase();
+
 						if (_RemoveAttackFlag)
 							cmd->buttons &= ~IN_ATTACK;
+
 						LocalPlayer.Entity->ToPlayerRecord()->m_bAllowAnimationEvents = true;
 						LocalPlayer.Entity->SetIsCustomPlayer(false);
 						LocalPlayer.BeginEnginePrediction(cmd);

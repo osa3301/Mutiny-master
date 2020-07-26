@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "LocalPlayer.h"
 #include "CParallelProcessor.h"
+#include "ICollidable.h"
 #include "AutoWall.h"
 #include "UsedConvars.h"
 
@@ -444,4 +445,66 @@ int IntFromChars(const std::string& str, int start)
 typedescription_t* __fastcall FindFlatFieldByName(const char* name, datamap_t* map)
 {
 	return StaticOffsets.GetOffsetValueByType<typedescription_t*(__fastcall*)(const char*, datamap_t*)>(_FindFieldByName)(name, map);
+}
+
+//-----------------------------------------------------------------------------
+// Returns true if a box intersects with a sphere
+//-----------------------------------------------------------------------------
+bool IsBoxIntersectingSphere(const Vector& boxMin, const Vector& boxMax,
+	const Vector& center, float radius)
+{
+	// See Graphics Gems, box-sphere intersection
+	float dmin = 0.0f;
+	float flDelta;
+
+	// Unrolled the loop.. this is a big cycle stealer...
+	if (center[0] < boxMin[0])
+	{
+		flDelta = center[0] - boxMin[0];
+		dmin += flDelta * flDelta;
+	}
+	else if (center[0] > boxMax[0])
+	{
+		flDelta = boxMax[0] - center[0];
+		dmin += flDelta * flDelta;
+	}
+
+	if (center[1] < boxMin[1])
+	{
+		flDelta = center[1] - boxMin[1];
+		dmin += flDelta * flDelta;
+	}
+	else if (center[1] > boxMax[1])
+	{
+		flDelta = boxMax[1] - center[1];
+		dmin += flDelta * flDelta;
+	}
+
+	if (center[2] < boxMin[2])
+	{
+		flDelta = center[2] - boxMin[2];
+		dmin += flDelta * flDelta;
+	}
+	else if (center[2] > boxMax[2])
+	{
+		flDelta = boxMax[2] - center[2];
+		dmin += flDelta * flDelta;
+	}
+
+	return dmin < radius * radius;
+}
+
+bool bIsEntityInSphere(CBaseEntity* pStartEntity, const Vector& vecCenter, float flRadius)
+{
+	if (!pStartEntity)
+		return false;
+
+	auto _collideable = pStartEntity->GetCollideable();
+	Vector vecMins = _collideable->OBBMins();
+	Vector vecMaxs = _collideable->OBBMaxs();
+
+	if (!IsBoxIntersectingSphere(vecMins, vecMaxs, vecCenter, flRadius))
+		return false;
+
+	return true;
 }

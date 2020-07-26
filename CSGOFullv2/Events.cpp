@@ -373,7 +373,7 @@ void GameEvent_RoundStart(CGameEvent* gameEvent)
 
 	asuswall::get().game_event(gameEvent);
 
-#ifdef INCLUDE_LEGIT
+#ifdef INCLUDE_LEGITBOT
 	legitbot::get().game_event(gameEvent);
 #endif
 
@@ -442,7 +442,7 @@ void GameEvent_PlayerDeath(CGameEvent* gameEvent)
 	if (!LocalPlayer.Entity)
 		return;
 
-#ifdef INCLUDE_LEGIT
+#ifdef INCLUDE_LEGITBOT
 	legitbot::get().game_event(gameEvent);
 #endif
 }

@@ -3444,8 +3444,8 @@ void ui::rage() const
 					ImGuiEx::SetTip(XorStr("Automatically fire your current weapon when the minimum damage/hitchance match requirements"));
 					ImGuiEx::Checkbox(XorStr("Autostop"), &var.ragebot.b_autostop);
 					ImGuiEx::SetTip(XorStr("Automatically stop moving when the minimum damage/hitchance match requirements"));
-					ImGuiEx::Checkbox(XorStr("Autoscope"), &var.ragebot.b_autoscope);
-					ImGuiEx::SetTip(XorStr("Automatically scope your current weapon when the minimum damage/hitchance match requirements"));
+					ImGuiEx::Checkbox(XorStr("Autowall"), &var.ragebot.b_autowall);
+					ImGuiEx::SetTip(XorStr("Automatically check if can penetrate wall"));
 
 					//ImGuiEx::Checkbox(XorStr("Alternative Pointscale"), &var.ragebot.b_use_alternative_multipoint);
 					//ImGuiEx::SetTip(XorStr("This will automatic scale your points based on resolving")); //TICKBASE_FAKELAG_LIMIT

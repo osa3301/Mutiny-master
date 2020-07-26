@@ -149,6 +149,5 @@ public:
 	int GetTarget() const { return m_LastTarget.m_iEntIndex; }
 	void Run();
 };
+extern CLegitbot_imi g_Legitbot;
 #endif
-
-//extern CLegitbot_imi g_Legitbot;

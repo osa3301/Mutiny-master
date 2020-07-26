@@ -27,7 +27,7 @@
 
 #define NETVARPROXY(funcname) void funcname (CRecvProxyData *pData, void *pStruct, void *pOut)
 
-#define MAX_PLAYERS 64
+#define MAX_PLAYERS 32
 
 #if _HAS_CXX17
 using std::clamp;

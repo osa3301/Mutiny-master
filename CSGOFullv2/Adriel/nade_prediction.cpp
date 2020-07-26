@@ -123,42 +123,72 @@ void nade_prediction::render()
 		}
 
 		auto max_dmg = 0.f;
-		std::vector<int> vec_players;
+		static float flFlashRadius = 1500.0f;
+		std::vector<int> vec_damaged_players;
+		std::vector<int> vec_flashed_players;
 
-		if (s_type == WEAPON_HEGRENADE || s_type == WEAPON_MOLOTOV || s_type == WEAPON_INCGRENADE)
+		vec_damaged_players.clear();
+		vec_flashed_players.clear();
+
+		if (s_type == WEAPON_HEGRENADE || s_type == WEAPON_MOLOTOV || s_type == WEAPON_INCGRENADE || s_type == WEAPON_FLASHBANG)
 		{
 			for (auto i = 0; i < Interfaces::EngineClient->GetMaxClients(); i++)
 			{
 				auto p_entity = Interfaces::ClientEntList->GetBaseEntity(i);
+
 				if (!p_entity)
 					continue;
 
 				if (!p_entity->GetAlive() || p_entity->GetDormant() || p_entity->GetImmune())
 					continue;
 
-				auto vec_origin = p_entity->GetAbsOriginDirect();
-				auto dist = vec_origin.Dist(std::get<0>(prev));
-				if (dist >= 335.f)
-					continue;
+				if (s_type == WEAPON_HEGRENADE || s_type == WEAPON_MOLOTOV || s_type == WEAPON_INCGRENADE)
+				{
+					auto vec_origin = p_entity->GetAbsOriginDirect();
+					auto dist = vec_origin.Dist(std::get<0>(prev));
 
-				trace_t tr;
-				Ray_t ray;
+					if (dist >= 335.f)
+						continue;
 
-				ray.Init(std::get<0>(prev), vec_origin);
-				UTIL_TraceRay(ray, MASK_SHOT, p_entity, COLLISION_GROUP_NONE, &tr);
+					trace_t tr;
+					Ray_t ray;
 
-				if (tr.DidHit())
-					continue;
+					ray.Init(std::get<0>(prev), vec_origin);
+					UTIL_TraceRay(ray, MASK_SHOT, p_entity, COLLISION_GROUP_NONE, &tr);
 
-				auto d = (dist - 25.f) / 140.f;
-				auto fl_damage = 105.f * exp(-d * d);
-				auto dmg = max(static_cast<int>(ceilf(get_armour_health(fl_damage, p_entity->GetArmor()))), 0);
+					if (tr.DidHit())
+						continue;
 
-				if (dmg > 1.f)
-					vec_players.push_back(i);
+					auto d = (dist - 25.f) / 140.f;
+					auto fl_damage = 105.f * exp(-d * d);
+					auto dmg = max(static_cast<int>(ceilf(get_armour_health(fl_damage, p_entity->GetArmor()))), 0);
 
-				if (dmg > max_dmg)
-					max_dmg = dmg;
+					if (dmg > 1.f)
+						vec_damaged_players.push_back(i);
+
+					if (dmg > max_dmg)
+						max_dmg = dmg;
+				}
+				else if (s_type == WEAPON_FLASHBANG)
+				{
+					if (!bIsEntityInSphere(p_entity, std::get<0>(prev), flFlashRadius))
+						continue;
+
+					auto pos = p_entity->Weapon_ShootPosition();
+
+					if (!pos.IsValid())
+						continue;
+
+					Ray_t ray;
+					trace_t tr;
+
+					ray.Init(std::get<0>(prev), pos);
+					UTIL_TraceRay(ray, MASK_SHOT, p_entity, COLLISION_GROUP_NONE, &tr);
+
+					if (tr.fraction == 1.0f)
+						vec_flashed_players.push_back(i);
+
+				}
 			}
 		}
 
@@ -168,15 +198,18 @@ void nade_prediction::render()
 		
     	if (adr_math::world_to_screen(std::get<0>(prev), nade_end))
 		{
-			if (max_dmg > 0.f)
-			{
-				//decrypts(0)
-				if (s_type == WEAPON_HEGRENADE)
-					render::get().add_text(ImVec2(nade_end.x + 5, nade_end.y + 5), adr_util::get_health_color(max_dmg).ToImGUI(), CENTERED_X | DROP_SHADOW, BAKSHEESH_12, XorStr("-%0.f hp"), max_dmg);
-				else if ((s_type == WEAPON_MOLOTOV || s_type == WEAPON_INCGRENADE) && !b_fire && !vec_players.empty())
-					render::get().add_text(ImVec2(nade_end.x + 5, nade_end.y + 5), Color::Red().ToImGUI(), CENTERED_X | DROP_SHADOW, BAKSHEESH_12, XorStr("%d player(s) will burn."), static_cast<int>(vec_players.size()));
-				//encrypts(0)
-			}
+			if ((s_type == WEAPON_FLASHBANG) && !vec_flashed_players.empty())
+				render::get().add_text(ImVec2(nade_end.x + 5, nade_end.y + 5), Color::Red().ToImGUI(), CENTERED_X | DROP_SHADOW, BAKSHEESH_12, XorStr("%d player(s) will be flashed."), static_cast<int>(vec_flashed_players.size()));
+			else
+				if (max_dmg > 0.f)
+				{
+					//decrypts(0)
+					if (s_type == WEAPON_HEGRENADE)
+						render::get().add_text(ImVec2(nade_end.x + 5, nade_end.y + 5), adr_util::get_health_color(max_dmg).ToImGUI(), CENTERED_X | DROP_SHADOW, BAKSHEESH_12, XorStr("-%0.f hp"), max_dmg);
+					else if ((s_type == WEAPON_MOLOTOV || s_type == WEAPON_INCGRENADE) && !b_fire && !vec_damaged_players.empty())
+						render::get().add_text(ImVec2(nade_end.x + 5, nade_end.y + 5), Color::Red().ToImGUI(), CENTERED_X | DROP_SHADOW, BAKSHEESH_12, XorStr("%d player(s) will burn."), static_cast<int>(vec_damaged_players.size()));
+					//encrypts(0)
+				}
 		}
 	}
 }

@@ -62,3 +62,5 @@ bool IsAMD();
 int IntFromChars(const std::string& str, int start);
 
 typedescription_t* __fastcall FindFlatFieldByName(const char* name, datamap_t* map);
+
+bool bIsEntityInSphere(CBaseEntity* pStartEntity, const Vector& vecCenter, float flRadius);

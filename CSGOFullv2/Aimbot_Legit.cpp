@@ -1,5 +1,4 @@
 #if 0
-
 #include "precompiled.h"
 #include "Aimbot_imi.h"
 #include "AutoBone_imi.h"
@@ -292,11 +291,6 @@ void CLegitbot::TargetEntities()
 		if (_gotFreshList)
 			m_LowestFOVTarget = _lowestFOV;
 	}
-}
-
-bool CLegitbot::Run_AutoBone(CBaseEntity* Entity)
-{
-
 }
 
 bool CLegitbot::TargetEntity(Target_s* Target)

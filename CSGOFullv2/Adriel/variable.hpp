@@ -222,7 +222,7 @@ public:
 	struct struct_ragebot
 	{
 		bool b_enabled = true;
-		bool b_resolver = true;
+		bool b_resolver = false;
 		int i_flipenemy_key = 0;
 		bool b_resolver_experimental = true;
 		bool b_resolver_moving = true;
@@ -235,13 +235,14 @@ public:
 		bool b_autofire = true;
 		bool b_autoscope = true;
 		bool b_autostop = false;
+		bool b_autowall = false;
 		bool b_ignore_limbs_if_moving = true;
 		float f_ignore_limbs_if_moving = 0.1f;
 		bool b_scan_through_teammates = false;
 		bool b_make_all_misses_count = false;
 		bool b_strict_hitboxes = false;
 		int i_sort = 0;
-		int i_targets_per_tick = 2;
+		int i_targets_per_tick = 1;
 
 		bool_sw b_forwardtrack;
 
